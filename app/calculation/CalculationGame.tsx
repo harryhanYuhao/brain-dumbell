@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Card, PrimaryButton, Stat } from "../components/ui";
+import { readNumber, writeNumber } from "../lib/stored-value";
 import { ProblemView } from "./ProblemView";
 import {
   NUMBER_TYPES,
@@ -21,22 +22,6 @@ type Attempt = { problem: Problem; given: string; correct: boolean };
 type Phase = "idle" | "playing" | "done";
 
 const bestKey = (s: Settings) => `brain-dumbell:calculation-best:${settingsKey(s)}`;
-
-function readBest(s: Settings) {
-  try {
-    return Number(localStorage.getItem(bestKey(s))) || 0;
-  } catch {
-    return 0;
-  }
-}
-
-function saveBest(s: Settings, score: number) {
-  try {
-    localStorage.setItem(bestKey(s), String(score));
-  } catch {
-    // Storage unavailable (private mode etc.) — best score just isn't kept.
-  }
-}
 
 function answerHint(s: Settings) {
   if (s.numberType === "fraction") return "Type a fraction like 7/12, -3/4 or 1 1/2";
@@ -79,8 +64,8 @@ export function CalculationGame() {
       if (left === 0) {
         clearInterval(id);
         const score = attemptsRef.current.filter((x) => x.correct).length;
-        const previous = readBest(round);
-        if (score > previous) saveBest(round, score);
+        const previous = readNumber(bestKey(round)) ?? 0;
+        if (score > previous) writeNumber(bestKey(round), score);
         setBest({ score: Math.max(score, previous), isNew: score > previous });
         setPhase("done");
       }

@@ -22,7 +22,7 @@ export default function Home() {
         <h2 className="text-sm font-semibold uppercase tracking-widest text-muted">
           Exercises
         </h2>
-        <ul className="grid gap-4 sm:grid-cols-2">
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {exercises.map((exercise) => (
             <li key={exercise.href}>
               <Link

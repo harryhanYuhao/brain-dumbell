@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { PrimaryButton } from "../components/ui";
+import { useState } from "react";
+import { Field, PrimaryButton, Segmented, Stepper, Switch } from "../components/ui";
 import { ProblemView } from "./ProblemView";
 import {
   DEFAULT_SETTINGS,
@@ -112,16 +112,12 @@ export function SettingsPanel({
           />
         </Field>
         <Field label="Negative answers" hint="When off, every answer is 0 or more">
-          <label className="flex cursor-pointer items-center gap-3 text-sm">
-            <input
-              type="checkbox"
-              className="peer sr-only"
-              checked={settings.allowNegative}
-              onChange={(e) => set("allowNegative", e.target.checked)}
-            />
-            <span className="relative h-6 w-11 rounded-full bg-border transition-colors after:absolute after:top-0.5 after:left-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:bg-accent peer-checked:after:translate-x-5 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent" />
+          <Switch
+            checked={settings.allowNegative}
+            onChange={(v) => set("allowNegative", v)}
+          >
             {settings.allowNegative ? "Allowed" : "Not allowed"}
-          </label>
+          </Switch>
         </Field>
       </div>
 
@@ -155,96 +151,6 @@ export function SettingsPanel({
           </button>
         )}
       </div>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  hint,
-  wide,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  wide?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <div className={`flex flex-col gap-2 ${wide ? "sm:col-span-2" : ""}`}>
-      <span className="text-sm font-medium">{label}</span>
-      {children}
-      {hint && <span className="text-xs text-muted">{hint}</span>}
-    </div>
-  );
-}
-
-function Stepper({
-  value,
-  range: [min, max],
-  onChange,
-  label,
-}: {
-  value: number;
-  range: readonly [number, number];
-  onChange: (value: number) => void;
-  label: string;
-}) {
-  const btn =
-    "grid size-9 place-items-center text-lg text-muted transition-colors hover:bg-accent-soft hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent";
-  return (
-    <div className="inline-flex w-fit items-center overflow-hidden rounded-lg border border-border">
-      <button
-        type="button"
-        className={btn}
-        disabled={value <= min}
-        onClick={() => onChange(value - 1)}
-        aria-label={`Fewer ${label}`}
-      >
-        −
-      </button>
-      <span className="w-12 text-center font-mono text-lg font-semibold tabular-nums" aria-live="polite">
-        {value}
-      </span>
-      <button
-        type="button"
-        className={btn}
-        disabled={value >= max}
-        onClick={() => onChange(value + 1)}
-        aria-label={`More ${label}`}
-      >
-        +
-      </button>
-    </div>
-  );
-}
-
-function Segmented<T extends string | number>({
-  options,
-  value,
-  onChange,
-}: {
-  options: { value: T; label: string }[];
-  value: T;
-  onChange: (value: T) => void;
-}) {
-  return (
-    <div className="inline-flex w-fit flex-wrap rounded-lg border border-border p-0.5">
-      {options.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          aria-pressed={o.value === value}
-          onClick={() => onChange(o.value)}
-          className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-            o.value === value
-              ? "bg-accent text-white"
-              : "text-muted hover:text-foreground"
-          }`}
-        >
-          {o.label}
-        </button>
-      ))}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ExercisesMenu } from "./components/ExercisesMenu";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { themeScript } from "./theme";
 import { exercises } from "./exercises";
@@ -50,18 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               Brain Dumbell
             </Link>
             <div className="flex items-center gap-1">
-              <ul className="hidden gap-1 whitespace-nowrap text-sm sm:flex">
-                {exercises.map((exercise) => (
-                  <li key={exercise.href}>
-                    <Link
-                      href={exercise.href}
-                      className="rounded-md px-3 py-1.5 text-muted transition-colors hover:bg-accent-soft hover:text-foreground"
-                    >
-                      {exercise.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <ExercisesMenu exercises={exercises} />
               <ThemeToggle />
             </div>
           </nav>

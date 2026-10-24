@@ -10,6 +10,7 @@ import {
   sub,
   type Rational,
 } from "./rational";
+import type { Rng } from "../lib/random";
 
 export type Op = "+" | "-" | "×" | "÷" | "^";
 type BinaryOp = Exclude<Op, "^">;
@@ -57,19 +58,7 @@ export type Factor = { value: Rational; exp?: number };
 /** factors[i] and factors[i + 1] are joined by ops[i]. */
 export type Problem = { factors: Factor[]; ops: BinaryOp[]; answer: Rational };
 
-export type Rng = () => number;
-
-/** Deterministic PRNG (mulberry32) — used for the settings preview. */
-export function seededRng(seed: number): Rng {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+export { seededRng, type Rng } from "../lib/random";
 
 function randInt(rng: Rng, min: number, max: number) {
   return min + Math.floor(rng() * (max - min + 1));
