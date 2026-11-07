@@ -6,6 +6,7 @@ import { ThemeToggle } from "./components/ThemeToggle";
 import { themeScript } from "./theme";
 import { exercises } from "./exercises";
 import { Analytics } from "@vercel/analytics/next"
+import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -65,6 +66,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </footer>
       </body>
       <Analytics />
+      <GoogleAnalytics gaId="G-EP1ERTJCNT" />
     </html>
   );
 }
