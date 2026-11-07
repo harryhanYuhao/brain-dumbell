@@ -144,7 +144,8 @@ export function TwinSteerGame() {
   const [round, setRound] = useState<Settings>(settings);
   const [view, setView] = useState<World | null>(null);
   const [best, setBest] = useState<{ value: number; isNew: boolean } | null>(null);
-  const world = useRef<World>(newWorld(settings));
+  // Set by start(); the loop only runs while playing, so it is never read before then.
+  const world = useRef<World>(null!);
   // Codes of keys (or on-screen pad buttons) held down right now.
   const held = useRef(new Set<string>());
 
