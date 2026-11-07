@@ -5,6 +5,7 @@ import { ExercisesMenu } from "./components/ExercisesMenu";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { themeScript } from "./theme";
 import { exercises } from "./exercises";
+import { Analytics } from "@vercel/analytics/next"
 import "./globals.css";
 
 const geistSans = Geist({
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Lift a little every day.
         </footer>
       </body>
+      <Analytics />
     </html>
   );
 }

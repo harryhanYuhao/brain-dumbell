@@ -12,9 +12,7 @@ export default function Home() {
           A gym for your mind.
         </h1>
         <p className="max-w-xl text-lg leading-8 text-muted">
-          Brain Dumbell is a set of short, focused exercises. Each one takes
-          a minute or two — pick one, give it your full attention, and try to
-          beat your last score.
+          Brain Dumbell is a set of short, focused workout for your brain.
         </p>
         <nav aria-label="Categories" className="flex flex-wrap gap-2 pt-2">
           {categories.map((c) => (
