@@ -80,6 +80,20 @@ export function writeNumber(key: string, value: number) {
   }
 }
 
+/**
+ * Stores `score` under `key` if it beats the saved best, and returns the best
+ * so far. A first score only counts as a best when it is above zero (or, for
+ * lower-is-better scores, whenever there is no saved one).
+ */
+export function recordBest(key: string, score: number, lowerIsBetter = false) {
+  const previous = readNumber(key);
+  const isNew = lowerIsBetter
+    ? previous === null || score < previous
+    : score > (previous ?? 0);
+  if (isNew) writeNumber(key, score);
+  return { value: isNew ? score : (previous ?? score), isNew };
+}
+
 // Helpers for sanitizing settings read back from storage.
 
 export function pickInt(

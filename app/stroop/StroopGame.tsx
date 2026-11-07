@@ -3,6 +3,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import {
   Card,
+  ExitButton,
   Field,
   PrimaryButton,
   ProgressBar,
@@ -35,7 +36,7 @@ const COLORS = [
 type ColorId = (typeof COLORS)[number]["id"];
 
 const DURATIONS = [20, 30, 60] as const;
-const MODES = ["classic", "switch"] as const;
+const MODES = ["classic", "switch", "benchmark"] as const;
 // Share of trials where word and ink agree; the rest clash.
 const CONGRUENT_SHARE = 0.25;
 
@@ -56,6 +57,9 @@ const store = createStoredValue("brain-dumbell:stroop-settings", DEFAULTS, (raw)
 });
 
 const bestKey = (s: Settings) => `brain-dumbell:stroop-best:${s.colors}|${s.durationSec}|${s.mode}`;
+// Average reaction time from the latest benchmark round, per colour count
+// (the button layout changes with it).
+const baselineKey = (s: Settings) => `brain-dumbell:stroop-baseline:${s.colors}`;
 
 type Rule = "ink" | "word";
 type Trial = { word: ColorId; ink: ColorId; rule: Rule };
@@ -71,7 +75,9 @@ function makeTrial(s: Settings, prev: Trial | null): Trial {
   for (; ;) {
     const word = randomItem(palette);
     const ink =
-      Math.random() < CONGRUENT_SHARE ? word : randomItem(palette.filter((c) => c !== word));
+      s.mode === "benchmark" || Math.random() < CONGRUENT_SHARE
+        ? word
+        : randomItem(palette.filter((c) => c !== word));
     const rule: Rule = s.mode === "switch" ? randomItem(["ink", "word"] as const) : "ink";
     if (!prev || prev.word !== word || prev.ink !== ink) return { word, ink, rule };
   }
@@ -93,6 +99,7 @@ export function StroopGame() {
   const [remaining, setRemaining] = useState(0);
   const [flash, setFlash] = useState<{ ok: boolean; id: number } | null>(null);
   const [best, setBest] = useState<{ score: number; isNew: boolean } | null>(null);
+  const [baseline, setBaseline] = useState<number | null>(null);
   const shownAt = useRef(0);
   const resultsRef = useRef<Result[]>([]);
 
@@ -119,6 +126,13 @@ export function StroopGame() {
         const previous = readNumber(bestKey(round)) ?? 0;
         if (score > previous) writeNumber(bestKey(round), score);
         setBest({ score: Math.max(score, previous), isNew: score > previous });
+        if (round.mode === "benchmark") {
+          const avg = mean(resultsRef.current.filter((r) => r.correct).map((r) => r.rt));
+          if (avg !== null) writeNumber(baselineKey(round), avg);
+          setBaseline(null);
+        } else {
+          setBaseline(readNumber(baselineKey(round)));
+        }
         setPhase("done");
       }
     }, 50);
@@ -153,6 +167,7 @@ export function StroopGame() {
   }
 
   const onKey = useEffectEvent((e: KeyboardEvent) => {
+    if (e.key === "Escape") return setPhase("idle");
     // Keys 1–9, then 0 for the tenth colour.
     const index = e.key === "0" ? 9 : Number(e.key) - 1;
     if (e.repeat || !Number.isInteger(index) || index < 0 || index >= round.colors) return;
@@ -192,7 +207,9 @@ export function StroopGame() {
               hint={
                 settings.mode === "classic"
                   ? "Always answer the ink colour"
-                  : "A cue above each word says whether to answer the INK or the WORD"
+                  : settings.mode === "switch"
+                    ? "A cue above each word says whether to answer the INK or the WORD"
+                    : "Word and ink always match — measures your baseline reaction time"
               }
               wide
             >
@@ -200,6 +217,7 @@ export function StroopGame() {
                 options={[
                   { value: "classic", label: "Classic" },
                   { value: "switch", label: "Switch" },
+                  { value: "benchmark", label: "Benchmark" },
                 ]}
                 value={settings.mode}
                 onChange={(v) => set("mode", v)}
@@ -212,11 +230,11 @@ export function StroopGame() {
               className="text-5xl font-black tracking-wide"
               style={{ color: "var(--stroop-blue)" }}
             >
-              RED
+              {settings.mode === "benchmark" ? "BLUE" : "RED"}
             </span>
             <span className="text-sm text-muted">
-              The answer is <strong className="text-foreground">Blue</strong>: the ink, not
-              the word.
+              The answer is <strong className="text-foreground">Blue</strong>
+              {settings.mode === "benchmark" ? "." : ": the ink, not the word."}
             </span>
           </div>
           <div className="flex justify-center">
@@ -253,17 +271,40 @@ export function StroopGame() {
               {round.colors} colours · {round.mode} · {round.durationSec}s
             </p>
           </div>
-          <dl className="grid w-full max-w-md grid-cols-2 gap-4">
-            <Stat label="Accuracy" value={`${accuracy}%`} />
-            <Stat label="Avg. time" value={ms(rt(correct))} />
-            <Stat label="Matching words" value={ms(congruent)} />
-            <Stat label="Clashing words" value={ms(clashing)} />
-          </dl>
+          {round.mode === "benchmark" ? (
+            <>
+              <dl className="grid w-full max-w-md grid-cols-2 gap-4">
+                <Stat label="Accuracy" value={`${accuracy}%`} />
+                <Stat label="Avg. time" value={ms(rt(correct))} />
+              </dl>
+              <p className="max-w-md text-sm text-muted">
+                Saved as your baseline for {round.colors} colours. Classic and Switch results
+                will be compared against it.
+              </p>
+            </>
+          ) : (
+            <dl className="grid w-full max-w-md grid-cols-2 gap-4">
+              <Stat label="Accuracy" value={`${accuracy}%`} />
+              <Stat label="Avg. time" value={ms(rt(correct))} />
+              <Stat label="Matching words" value={ms(congruent)} />
+              <Stat label="Clashing words" value={ms(clashing)} />
+            </dl>
+          )}
           <div className="flex max-w-md flex-col gap-1 text-sm text-muted">
-            <p>
-              <span className="font-semibold text-foreground">Stroop effect: {diff(clashing, congruent)}</span>{" "}
-              — the extra time a clashing word costs you. Smaller means better control.
-            </p>
+            {round.mode !== "benchmark" && (
+              <p>
+                <span className="font-semibold text-foreground">Stroop effect: {diff(clashing, congruent)}</span>{" "}
+                — the extra time a clashing word costs you. Smaller means better control.
+              </p>
+            )}
+            {round.mode !== "benchmark" && (
+              <p>
+                <span className="font-semibold text-foreground">vs. baseline: {diff(rt(correct), baseline)}</span>{" "}
+                — {baseline === null
+                  ? "play a Benchmark round to record your baseline."
+                  : "your average time compared with your latest benchmark."}
+              </p>
+            )}
             {round.mode === "switch" && (
               <p>
                 <span className="font-semibold text-foreground">Switch cost: {diff(switches, repeats)}</span>{" "}
@@ -288,6 +329,7 @@ export function StroopGame() {
           <span className="font-medium tabular-nums">
             {Math.ceil(remaining / 1000)}s <span className="text-muted">left</span>
           </span>
+          <ExitButton onClick={() => setPhase("idle")} />
           <span className="font-medium tabular-nums">
             {results.filter((r) => r.correct).length} <span className="text-muted">correct</span>
           </span>
@@ -342,10 +384,7 @@ export function StroopGame() {
           ))}
         </div>
         <p className="text-center text-xs text-muted">
-          Tap a colour or press its number key ·{" "}
-          <button type="button" onClick={() => setPhase("idle")} className="hover:text-foreground">
-            Quit round
-          </button>
+          Tap a colour or press its number key · Esc to exit
         </p>
       </div>
     </Card>

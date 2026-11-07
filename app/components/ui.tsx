@@ -176,3 +176,42 @@ export function ProgressBar({ value }: { value: number }) {
     </div>
   );
 }
+
+/** Small outlined button for leaving a round in progress. */
+export function ExitButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-full border border-border px-4 py-1 text-sm font-medium transition hover:border-accent"
+    >
+      Exit
+    </button>
+  );
+}
+
+/** The big number at the top of a results screen, with the personal best under it. */
+export function ResultHeadline({
+  label,
+  value,
+  best,
+  meta,
+}: {
+  label: string;
+  value: ReactNode;
+  best: { value: ReactNode; isNew: boolean } | null;
+  meta?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <p className="text-sm uppercase tracking-widest text-muted">{label}</p>
+      <p className="text-7xl font-bold tabular-nums">{value}</p>
+      {best?.isNew ? (
+        <p className="font-medium text-accent">New personal best! 🎉</p>
+      ) : (
+        best && <p className="text-sm text-muted">Personal best: {best.value}</p>
+      )}
+      {meta && <p className="mt-2 text-xs text-muted">{meta}</p>}
+    </div>
+  );
+}
